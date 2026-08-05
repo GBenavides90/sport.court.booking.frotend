@@ -2,21 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { Container, Typography, Box, Button, TextField, Table, TableBody, TableCell, TableHead, TableRow, Paper, Alert } from '@mui/material';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function AdminPanel() {
   const [courts, setCourts] = useState([]);
   const [error, setError] = useState('');
   const [form, setForm] = useState({ name: '', description: '', category: '', capacity: '' });
   const [file, setFile] = useState(null);
 
-  useEffect(() => {
-    fetchCourts();
-  }, []);
-
   const fetchCourts = () => {
-    axios.get('http://localhost:8080/api/courts?page=0&size=100')
+    axios.get(`${API_URL}/api/courts?page=0&size=100`)
       .then(res => setCourts(res.data.content || []))
       .catch(err => console.error(err));
   };
+
+  useEffect(() => {
+    fetchCourts();
+  }, []);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -30,7 +32,7 @@ export default function AdminPanel() {
     if (file) formData.append('image', file);
 
     try {
-      await axios.post('http://localhost:8080/api/courts', formData, {
+      await axios.post(`${API_URL}/api/courts`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       fetchCourts();
@@ -48,7 +50,7 @@ export default function AdminPanel() {
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta cancha?')) {
       try {
-        await axios.delete(`http://localhost:8080/api/courts/${id}`);
+        await axios.delete(`${API_URL}/api/courts/${id}`);
         fetchCourts();
       } catch (err) {
         console.error(err);

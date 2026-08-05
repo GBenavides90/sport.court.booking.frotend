@@ -8,12 +8,13 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
-    // Sprint 1 paginación a 10 items por defecto
-    axios.get('http://localhost:8080/api/courts?page=0&size=10')
+    axios.get(`${API_URL}/api/courts?page=0&size=10`)
       .then(res => setCourts(res.data.content || []))
       .catch(err => console.error(err));
-  }, []);
+  }, [API_URL]);
 
   const filteredCourts = courts.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -43,7 +44,7 @@ export default function Home() {
               <CardMedia
                 component="img"
                 height="200"
-                image={court.imageUrl ? `http://localhost:8080${court.imageUrl}` : 'https://via.placeholder.com/400x200?text=Cancha'}
+                image={court.imageUrl ? `${API_URL}${court.imageUrl}` : `https://placehold.co/400x200?text=${encodeURIComponent(court.name)}`}
                 alt={court.name}
               />
               <CardContent sx={{ flexGrow: 1 }}>

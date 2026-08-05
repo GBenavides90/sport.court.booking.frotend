@@ -4,13 +4,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function CourtDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [court, setCourt] = useState(null);
 
   useEffect(() => {
-    axios.get(`http://localhost:8080/api/courts/${id}`)
+    axios.get(`${API_URL}/api/courts/${id}`)
       .then(res => setCourt(res.data))
       .catch(err => console.error(err));
   }, [id]);
@@ -28,7 +30,7 @@ export default function CourtDetail() {
             <CardMedia
               component="img"
               height="400"
-              image={court.imageUrl ? `http://localhost:8080${court.imageUrl}` : 'https://via.placeholder.com/600x400?text=Cancha'}
+              image={court.imageUrl ? `${API_URL}${court.imageUrl}` : `https://placehold.co/600x400?text=${encodeURIComponent(court.name)}`}
               alt={court.name}
               sx={{ borderRadius: 2 }}
             />
