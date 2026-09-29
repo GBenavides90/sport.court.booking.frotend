@@ -5,7 +5,12 @@
 		},
 		{
 			"path": "../../sport.court.booking.backend"
+		},
+		{
+			"path": "../../Documentación"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "interactive"
+	}
 }
