@@ -5,11 +5,19 @@ import {
 } from '@mui/material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import SportsTennisIcon from '@mui/icons-material/SportsTennis';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { useAuth } from '../context/AuthContext';
 
 /* ── TC-04: Header sticky (always visible on scroll) ── */
 export default function Header() {
   const navigate  = useNavigate();
   const location  = useLocation();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     /* TC-01: Header visible in all pages */
@@ -83,57 +91,90 @@ export default function Header() {
 
           {/* ── Nav links ── */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button
-              component={Link}
-              to="/administracion"
-              sx={{
-                color: location.pathname === '/administracion'
-                  ? 'success.main'
-                  : 'rgba(255,255,255,0.75)',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.07)' },
-              }}
-            >
-              Administración
-            </Button>
+            {user && user.role === 'ADMIN' && (
+              <Button
+                component={Link}
+                to="/administracion"
+                sx={{
+                  color: location.pathname === '/administracion'
+                    ? 'success.main'
+                    : 'rgba(255,255,255,0.75)',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.07)' },
+                }}
+              >
+                Administración
+              </Button>
+            )}
 
             <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.15)', mx: 0.5 }} />
 
-            {/* TC-03: "Iniciar sesión" button visible */}
-            <Button
-              id="btn-iniciar-sesion"
-              variant="outlined"
-              sx={{
-                color: 'white',
-                borderColor: 'rgba(255,255,255,0.35)',
-                fontWeight: 600,
-                '&:hover': {
-                  borderColor: 'white',
-                  bgcolor: 'rgba(255,255,255,0.07)',
-                },
-                borderRadius: 2,
-                px: 2.5,
-              }}
-            >
-              Iniciar Sesión
-            </Button>
+            {user ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'white' }}>
+                  <AccountCircleIcon />
+                  <Typography variant="body2" fontWeight="600">{user.email}</Typography>
+                </Box>
+                <Button
+                  id="btn-logout"
+                  variant="outlined"
+                  onClick={handleLogout}
+                  sx={{
+                    color: 'white',
+                    borderColor: 'rgba(255,255,255,0.35)',
+                    fontWeight: 600,
+                    '&:hover': {
+                      borderColor: 'white',
+                      bgcolor: 'rgba(255,255,255,0.07)',
+                    },
+                    borderRadius: 2,
+                    px: 2,
+                  }}
+                >
+                  Cerrar Sesión
+                </Button>
+              </Box>
+            ) : (
+              <>
+                <Button
+                  id="btn-iniciar-sesion"
+                  component={Link}
+                  to="/login"
+                  variant="outlined"
+                  sx={{
+                    color: 'white',
+                    borderColor: 'rgba(255,255,255,0.35)',
+                    fontWeight: 600,
+                    '&:hover': {
+                      borderColor: 'white',
+                      bgcolor: 'rgba(255,255,255,0.07)',
+                    },
+                    borderRadius: 2,
+                    px: 2.5,
+                  }}
+                >
+                  Iniciar Sesión
+                </Button>
 
-            {/* TC-03: "Crear cuenta" button visible */}
-            <Button
-              id="btn-crear-cuenta"
-              variant="contained"
-              color="success"
-              sx={{
-                fontWeight: 700,
-                borderRadius: 2,
-                px: 2.5,
-                '&:hover': { bgcolor: '#27a660' },
-                boxShadow: '0 2px 8px rgba(47,191,113,0.4)',
-              }}
-            >
-              Crear Cuenta
-            </Button>
+                <Button
+                  id="btn-crear-cuenta"
+                  component={Link}
+                  to="/registro"
+                  variant="contained"
+                  color="success"
+                  sx={{
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    px: 2.5,
+                    '&:hover': { bgcolor: '#27a660' },
+                    boxShadow: '0 2px 8px rgba(47,191,113,0.4)',
+                  }}
+                >
+                  Crear Cuenta
+                </Button>
+              </>
+            )}
           </Box>
         </Toolbar>
       </Container>

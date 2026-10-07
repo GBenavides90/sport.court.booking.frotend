@@ -6,12 +6,16 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import CourtDetail from './pages/CourtDetail';
 import AdminPanel from './pages/AdminPanel';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
+      <AuthProvider>
+        <Router>
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
           <Header />
           <Box component="main" sx={{ flexGrow: 1, py: 4 }}>
@@ -19,11 +23,14 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/court/:id" element={<CourtDetail />} />
               <Route path="/administracion" element={<AdminPanel />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/registro" element={<Register />} />
             </Routes>
           </Box>
           <Footer />
         </Box>
-      </Router>
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
