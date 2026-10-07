@@ -15,11 +15,9 @@ import HomeIcon             from '@mui/icons-material/Home';
 import WarningAmberIcon     from '@mui/icons-material/WarningAmber';
 import PhoneAndroidIcon     from '@mui/icons-material/PhoneAndroid';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axiosConfig';
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-const SPORT_CATEGORIES = ['futbol', 'tenis', 'padel', 'squash', 'basquet'];
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export default function AdminPanel() {
   const navigate  = useNavigate();
@@ -33,6 +31,7 @@ export default function AdminPanel() {
   const [saving,  setSaving]  = useState(false);
   const [error,   setError]   = useState('');
   const [success, setSuccess] = useState('');
+  const [categories, setCategories] = useState([]);
 
   /* Form state */
   const [form, setForm] = useState({ name: '', description: '', category: '', capacity: '' });
@@ -47,13 +46,22 @@ export default function AdminPanel() {
   /* ── Fetch all courts ── */
   const fetchCourts = () => {
     setLoading(true);
-    axios.get(`${API_URL}/api/courts?page=0&size=100`)
+    api.get(`/courts?page=0&size=100`)
       .then(res => setCourts(res.data.content || []))
       .catch(() => setError('Error cargando la lista de canchas'))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchCourts(); }, []);
+  const fetchCategories = () => {
+    api.get('/categories')
+      .then(res => setCategories(res.data))
+      .catch(() => setError('Error cargando las categorías'));
+  };
+
+  useEffect(() => { 
+    fetchCourts(); 
+    fetchCategories();
+  }, []);
 
   /* ── TC-08: Register court with valid data ── */
   const handleCreate = async (e) => {
@@ -69,7 +77,7 @@ export default function AdminPanel() {
     if (file) formData.append('image', file);
 
     try {
-      await axios.post(`${API_URL}/api/courts`, formData, {
+      await api.post(`/courts`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       fetchCourts();
@@ -99,7 +107,7 @@ export default function AdminPanel() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await axios.delete(`${API_URL}/api/courts/${deleteTarget.id}`);
+      await api.delete(`/courts/${deleteTarget.id}`);
       fetchCourts();
       setSuccess(`🗑️ Cancha "${deleteTarget.name}" eliminada correctamente`);
     } catch {
@@ -289,9 +297,9 @@ export default function AdminPanel() {
                     onChange={e => setForm({ ...form, category: e.target.value })}
                   >
                     <option value="">Selecciona una categoría...</option>
-                    {SPORT_CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
                       </option>
                     ))}
                   </TextField>
