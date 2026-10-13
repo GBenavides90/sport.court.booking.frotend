@@ -4,20 +4,19 @@ import {
   Dialog, DialogContent, IconButton, Chip, Skeleton, Alert
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import ArrowBackIcon        from '@mui/icons-material/ArrowBack';
-import CloseIcon            from '@mui/icons-material/Close';
-import GroupIcon            from '@mui/icons-material/Group';
-import SportsSoccerIcon     from '@mui/icons-material/SportsSoccer';
-import CalendarTodayIcon    from '@mui/icons-material/CalendarToday';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import ArrowBackIcon     from '@mui/icons-material/ArrowBack';
+import CloseIcon         from '@mui/icons-material/Close';
+import GroupIcon         from '@mui/icons-material/Group';
+import SportsSoccerIcon  from '@mui/icons-material/SportsSoccer';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import api, { getImageUrl } from '../api/axiosConfig';
+import FeatureIcon from '../components/FeatureIcon';
 
 /* ── Helper: secondary image urls ── */
 function getSecondaryImageUrl(court, index) {
   const colors = ['1E7F3B', '0A2540', '2FBF71', '6B7280'];
   return court.imageUrl
-    ? `${API_URL}${court.imageUrl}`
+    ? getImageUrl(court.imageUrl)
     : `https://placehold.co/300x200/${colors[index]}/ffffff?text=Foto+${index + 1}`;
 }
 
@@ -29,14 +28,14 @@ export default function CourtDetail() {
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
-  const [galleryOpen, setGalleryOpen]     = useState(false);   // TC-19
+  const [galleryOpen, setGalleryOpen]     = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    axios.get(`${API_URL}/api/courts/${id}`)
+    api.get(`/courts/${id}`)
       .then(res => {
         setCourt(res.data);
-        setSelectedImage(res.data.imageUrl ? `${API_URL}${res.data.imageUrl}` : null);
+        setSelectedImage(res.data.imageUrl ? getImageUrl(res.data.imageUrl) : null);
       })
       .catch(() => setError('No se pudo cargar la información de la cancha.'))
       .finally(() => setLoading(false));
@@ -65,34 +64,38 @@ export default function CourtDetail() {
 
   if (!court) return null;
 
+  // Modelo de datos: court.category es un objeto { id, title, description, imageUrl }
+  const categoryTitle = court.category?.title || (typeof court.category === 'string' ? court.category : 'General');
   const mainImage = selectedImage
-    || (court.imageUrl ? `${API_URL}${court.imageUrl}` : `https://placehold.co/800x480/0A2540/ffffff?text=${encodeURIComponent(court.name)}`);
+    || (court.imageUrl ? getImageUrl(court.imageUrl) : `https://placehold.co/800x480/0A2540/ffffff?text=${encodeURIComponent(court.name)}`);
 
-  /* TC-18: 4 secondary images */
   const secondaryImages = [0, 1, 2, 3].map(i => ({
     url: getSecondaryImageUrl(court, i),
     label: `Foto ${i + 1}`,
   }));
+
+  // Lista de características de la cancha (HU18)
+  const featuresList = Array.isArray(court.features)
+    ? court.features
+    : (court.features ? Array.from(court.features) : []);
 
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
 
       {/* ══════════════════════════════════════════════════════════
           HU5 — Detail header strip: título izquierda, flecha derecha
-          TC-14: título visible | TC-16: flecha "volver" a la derecha
       ══════════════════════════════════════════════════════════ */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',   // título LEFT, flecha RIGHT
+          justifyContent: 'space-between',
           mb: 3,
           pb: 2,
           borderBottom: '1px solid',
           borderColor: 'divider',
         }}
       >
-        {/* TC-14: Título alineado a la izquierda */}
         <Typography
           id="court-title"
           variant="h4"
@@ -104,7 +107,6 @@ export default function CourtDetail() {
           {court.name}
         </Typography>
 
-        {/* TC-16: Flecha volver alineada a la DERECHA */}
         <Button
           id="btn-volver"
           endIcon={<ArrowBackIcon sx={{ transform: 'scaleX(-1)' }} />}
@@ -118,13 +120,12 @@ export default function CourtDetail() {
       </Box>
 
       {/* ══════════════════════════════════════════════════════════
-          HU6 — Gallery block: 100% ancho, imagen principal IZQUIERDA,
-          grilla 2×2 DERECHA — TC-17 / TC-18 / TC-19
+          HU6 — Gallery block
       ══════════════════════════════════════════════════════════ */}
       <Paper
         elevation={0}
         sx={{
-          width: '100%',             // 100% del ancho del contenedor
+          width: '100%',
           borderRadius: 3,
           overflow: 'hidden',
           border: '1px solid',
@@ -140,7 +141,7 @@ export default function CourtDetail() {
             minHeight: { md: 420 },
           }}
         >
-          {/* ─── LEFT HALF: imagen principal — TC-17 ─── */}
+          {/* ─── LEFT HALF: imagen principal ─── */}
           <Box
             sx={{
               flex: '0 0 50%',
@@ -150,7 +151,6 @@ export default function CourtDetail() {
             }}
           >
             <Box
-              id="gallery-main-image"
               component="img"
               src={mainImage}
               alt={court.name}
@@ -159,36 +159,32 @@ export default function CourtDetail() {
                 height: '100%',
                 objectFit: 'cover',
                 display: 'block',
-                position: { md: 'absolute' },
-                inset: 0,
               }}
             />
           </Box>
 
-          {/* ─── RIGHT HALF: grilla 2 filas × 2 columnas — TC-18 ─── */}
+          {/* ─── RIGHT HALF: grilla 2×2 miniaturas + botón "Ver más" ─── */}
           <Box
             sx={{
               flex: '0 0 50%',
               display: 'flex',
               flexDirection: 'column',
-              bgcolor: '#060A10',
+              bgcolor: '#111827',
             }}
           >
-            {/* 2×2 grid occupies full height of right half */}
             <Box
               sx={{
+                flex: 1,
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr',   // 2 columnas
-                gridTemplateRows: '1fr 1fr',       // 2 filas
-                flexGrow: 1,
+                gridTemplateColumns: '1fr 1fr',
+                gridTemplateRows: '1fr 1fr',
                 gap: '2px',
-                minHeight: { xs: 260, md: 380 },
+                p: '2px',
               }}
             >
               {secondaryImages.map((img, i) => (
                 <Box
                   key={i}
-                  id={`gallery-thumb-${i + 1}`}
                   component="img"
                   src={img.url}
                   alt={img.label}
@@ -196,6 +192,7 @@ export default function CourtDetail() {
                   sx={{
                     width: '100%',
                     height: '100%',
+                    minHeight: { xs: 120, md: 180 },
                     objectFit: 'cover',
                     display: 'block',
                     cursor: 'pointer',
@@ -208,11 +205,11 @@ export default function CourtDetail() {
               ))}
             </Box>
 
-            {/* ─── TC-19: "Ver más" en región inferior derecha ─── */}
+            {/* "Ver más" galería */}
             <Box
               sx={{
                 display: 'flex',
-                justifyContent: 'flex-end',       // alineado a la derecha
+                justifyContent: 'flex-end',
                 alignItems: 'center',
                 px: 2,
                 py: 1.5,
@@ -243,15 +240,15 @@ export default function CourtDetail() {
       </Paper>
 
       {/* ══════════════════════════════════════════════════════════
-          HU5 — Body: descripción + info + CTA — TC-15
+          HU5 — Body: descripción + info + CTA
       ══════════════════════════════════════════════════════════ */}
       <Grid container spacing={4}>
-        {/* TC-15: Description */}
+        {/* Descripción */}
         <Grid item xs={12} md={7}>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
             <Chip
               icon={<SportsSoccerIcon />}
-              label={court.category}
+              label={categoryTitle}
               sx={{ bgcolor: '#E8F5E9', color: '#1E7F3B', fontWeight: 700, textTransform: 'capitalize' }}
             />
             <Chip
@@ -270,7 +267,7 @@ export default function CourtDetail() {
           </Typography>
         </Grid>
 
-        {/* Info + CTA */}
+        {/* Info + CTA de Reserva */}
         <Grid item xs={12} md={5}>
           <Paper
             elevation={0}
@@ -279,7 +276,7 @@ export default function CourtDetail() {
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
               <InfoItem icon="⏱️" label="Bloque" value="1 hora" />
               <InfoItem icon="📍" label="Disponibilidad" value="En tiempo real" />
-              <InfoItem icon="🏆" label="Deporte" value={court.category} />
+              <InfoItem icon="🏆" label="Deporte" value={categoryTitle} />
               <InfoItem icon="👥" label="Capacidad" value={`${court.capacity} pers.`} />
             </Box>
             <Button
@@ -298,7 +295,73 @@ export default function CourtDetail() {
       </Grid>
 
       {/* ══════════════════════════════════════════════════════════
-          FULL GALLERY DIALOG — TC-19
+          HU18 — Bloque Características (con ícono y nombre)
+      ══════════════════════════════════════════════════════════ */}
+      <Box sx={{ mt: 5 }} id="bloque-caracteristicas">
+        <Typography variant="h5" fontWeight={700} color="primary.main" gutterBottom>
+          Características
+        </Typography>
+        <Divider sx={{ mb: 3 }} />
+
+        {featuresList.length > 0 ? (
+          <Grid container spacing={2}>
+            {featuresList.map((feat) => (
+              <Grid item xs={12} sm={6} md={3} key={feat.id}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    bgcolor: 'background.paper',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+                      borderColor: 'primary.light',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      bgcolor: 'rgba(30, 127, 59, 0.1)',
+                      color: 'success.main',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <FeatureIcon name={feat.icon} />
+                  </Box>
+                  <Typography variant="body2" fontWeight={600} color="text.primary">
+                    {feat.name}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Paper
+            elevation={0}
+            sx={{ p: 3, borderRadius: 2, bgcolor: 'background.default', border: '1px dashed', borderColor: 'divider' }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              Esta cancha no tiene características adicionales registradas en este momento.
+            </Typography>
+          </Paper>
+        )}
+      </Box>
+
+      {/* ══════════════════════════════════════════════════════════
+          FULL GALLERY DIALOG
       ══════════════════════════════════════════════════════════ */}
       <Dialog
         open={galleryOpen}
@@ -317,14 +380,12 @@ export default function CourtDetail() {
         </Box>
 
         <DialogContent sx={{ p: 2 }}>
-          {/* Main preview */}
           <Box
             component="img"
             src={mainImage}
             alt={court.name}
             sx={{ width: '100%', borderRadius: 2, maxHeight: 360, objectFit: 'cover', mb: 2 }}
           />
-          {/* Thumbnail strip */}
           <Grid container spacing={1}>
             {secondaryImages.map((img, i) => (
               <Grid item key={i} xs={6} sm={3}>

@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+// Extraemos la URL base del entorno o usamos el backend local por defecto
+const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+export const API_BASE_URL = rawApiUrl.replace(/\/+$/, '');
+
 const api = axios.create({
-  baseURL: '/api' // Using Vite proxy
+  baseURL: `${API_BASE_URL}/api`,
 });
 
 api.interceptors.request.use(
@@ -12,21 +16,27 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Clear token if unauthorized
       localStorage.removeItem('token');
-      // Optional: Redirect to login or trigger an event
     }
     return Promise.reject(error);
   }
 );
+
+/**
+ * Resuelve la URL absoluta de una imagen (subida o externa)
+ */
+export function getImageUrl(path) {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE_URL}${cleanPath}`;
+}
 
 export default api;
