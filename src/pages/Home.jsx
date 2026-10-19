@@ -72,7 +72,10 @@ export default function Home() {
         setTotalElements(data.totalElements || 0);
         setPage(pageNum);
       })
-      .catch(() => setError('No se pudo conectar con el servidor. Verifica que el backend esté activo.'))
+      .catch((err) => {
+        const msg = err.response?.data?.message || 'No se pudo conectar con el servidor. Verifica que el backend esté activo.';
+        setError(msg);
+      })
       .finally(() => setLoading(false));
   };
 
