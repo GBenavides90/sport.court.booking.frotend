@@ -29,24 +29,39 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    // Validación de contraseña según HU13 (mayúscula, minúscula, número y mínimo 8 caracteres)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,64}$/;
+    if (!passwordRegex.test(formData.password)) {
+      setError('La contraseña debe tener al menos 8 caracteres, con mayúscula, minúscula y número.');
+      return;
+    }
+
     setLoading(true);
 
-    const result = await register({
-        name: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
+    try {
+      const result = await register({
+        firstName: formData.firstName.trim(),
+        name: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
         password: formData.password
-    });
-    
-    if (result.success) {
-      setSuccess(true);
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
-    } else {
-      setError(result.message);
+      });
+      
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else {
+        setError(result.message || 'Error al registrarse');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Error de conexión con el servidor';
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -109,7 +124,7 @@ export default function Register() {
                 type="password"
                 required
                 inputProps={{ minLength: 8 }}
-                helperText="Debe tener al menos 8 caracteres."
+                helperText="Mínimo 8 caracteres, al menos una mayúscula, una minúscula y un número."
                 value={formData.password}
                 onChange={handleChange}
               />

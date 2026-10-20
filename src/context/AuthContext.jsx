@@ -48,10 +48,20 @@ export const AuthProvider = ({ children }) => {
       await api.post('/auth/register', userData);
       return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Error al registrarse'
-      };
+      let message = 'Error al registrarse';
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (typeof data === 'string') {
+          message = data;
+        } else if (data.message) {
+          message = data.message;
+        } else if (data.errors && typeof data.errors === 'object') {
+          message = Object.values(data.errors)[0] || message;
+        }
+      } else if (error.message) {
+        message = error.message;
+      }
+      return { success: false, message };
     }
   };
 
