@@ -8,6 +8,7 @@ import CourtDetail from './pages/CourtDetail';
 import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Favorites from './pages/Favorites';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
               <Route path="/administracion" element={<AdminPanel />} />
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Register />} />
+              <Route path="/favoritos" element={<Favorites />} />
             </Routes>
           </Box>
           <Footer />

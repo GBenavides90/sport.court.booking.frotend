@@ -70,6 +70,7 @@ export default function AdminPanel() {
   /* Category form state (HU21) */
   const [catForm, setCatForm] = useState({ title: '', description: '' });
   const [catFile, setCatFile] = useState(null);
+  const [deleteCategoryTarget, setDeleteCategoryTarget] = useState(null);
 
   /* ── Load initial data ── */
   const fetchCourts = () => {
@@ -228,6 +229,21 @@ export default function AdminPanel() {
       setError(err.response?.data?.message || 'Error al crear la categoría');
     } finally {
       setSaving(false);
+    }
+  };
+
+  /* ── HU29: Delete category with preventive confirmation ── */
+  const confirmDeleteCategory = async () => {
+    if (!deleteCategoryTarget) return;
+    try {
+      await api.delete(`/categories/${deleteCategoryTarget.id}`);
+      fetchCategories();
+      fetchCourts();
+      setSuccess(`🗑️ Categoría "${deleteCategoryTarget.title}" eliminada correctamente`);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error al eliminar la categoría');
+    } finally {
+      setDeleteCategoryTarget(null);
     }
   };
 
@@ -904,6 +920,7 @@ export default function AdminPanel() {
                       <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Título</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Descripción</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700 }}>Acciones</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -914,11 +931,23 @@ export default function AdminPanel() {
                         </TableCell>
                         <TableCell sx={{ fontWeight: 700 }}>{c.title}</TableCell>
                         <TableCell sx={{ color: 'text.secondary', maxWidth: 300 }}>{c.description}</TableCell>
+                        <TableCell align="right">
+                          <Tooltip title="Eliminar categoría (HU29)">
+                            <IconButton
+                              id={`btn-eliminar-categoria-${c.id}`}
+                              size="small"
+                              color="error"
+                              onClick={() => setDeleteCategoryTarget(c)}
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {categories.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={3} align="center" sx={{ py: 4 }}>
+                        <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
                           <Typography color="text.secondary">No hay categorías registradas.</Typography>
                         </TableCell>
                       </TableRow>
@@ -1062,6 +1091,48 @@ export default function AdminPanel() {
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setDeleteFeatureTarget(null)} variant="outlined">Cancelar</Button>
           <Button onClick={handleDeleteFeature} variant="contained" color="error">Eliminar</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Dialog confirmación eliminar categoría (HU29) ── */}
+      <Dialog
+        open={Boolean(deleteCategoryTarget)}
+        onClose={() => setDeleteCategoryTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1, color: 'error.main' }}>
+          <WarningAmberIcon color="error" />
+          <Typography fontWeight={700} component="span">Confirmación preventiva (HU29)</Typography>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-category-confirm-message" sx={{ mb: 2 }}>
+            ¿Estás seguro de que deseas eliminar la categoría <strong>"{deleteCategoryTarget?.title}"</strong>?
+          </DialogContentText>
+          <Alert severity="warning" sx={{ borderRadius: 2 }}>
+            <strong>Advertencia de consecuencias:</strong> Las canchas deportivas que pertenezcan a esta categoría quedarán desvinculadas. Esta acción no se puede deshacer.
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, pt: 1, gap: 1 }}>
+          <Button
+            id="btn-cancelar-eliminar-categoria"
+            onClick={() => setDeleteCategoryTarget(null)}
+            variant="outlined"
+            sx={{ borderRadius: 2, fontWeight: 600 }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            id="btn-confirmar-eliminar-categoria"
+            onClick={confirmDeleteCategory}
+            variant="contained"
+            color="error"
+            startIcon={<DeleteOutlineIcon />}
+            sx={{ borderRadius: 2, fontWeight: 700 }}
+          >
+            Confirmar eliminación
+          </Button>
         </DialogActions>
       </Dialog>
 

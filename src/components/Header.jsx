@@ -6,6 +6,7 @@ import {
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import SportsTennisIcon from '@mui/icons-material/SportsTennis';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import { useAuth } from '../context/AuthContext';
 
 /* ── TC-04: Header sticky (always visible on scroll) ── */
@@ -91,6 +92,26 @@ export default function Header() {
 
           {/* ── Nav links ── */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {user && (
+              <Button
+                id="btn-nav-favoritos"
+                component={Link}
+                to="/favoritos"
+                startIcon={<FavoriteIcon sx={{ color: location.pathname === '/favoritos' ? 'error.main' : 'error.light', fontSize: 18 }} />}
+                sx={{
+                  color: location.pathname === '/favoritos'
+                    ? 'success.main'
+                    : 'rgba(255,255,255,0.85)',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.07)' },
+                  borderRadius: 2,
+                }}
+              >
+                Favoritos
+              </Button>
+            )}
+
             {user && user.role === 'ADMIN' && (
               <Button
                 component={Link}
