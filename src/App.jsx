@@ -24,6 +24,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/court/:id" element={<CourtDetail />} />
               <Route path="/administracion" element={<AdminPanel />} />
+              <Route path="/admin" element={<AdminPanel />} />
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Register />} />
               <Route path="/favoritos" element={<Favorites />} />
